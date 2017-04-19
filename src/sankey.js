@@ -180,6 +180,9 @@ export default function() {
         return (size[1] - (nodes.length - 1) * nodePadding) / sum(nodes, value);
       });
 
+      // don't let ky be negative
+      ky = Math.max(ky, 1);
+
       nodesByBreadth.forEach(function(nodes) {
         nodes.forEach(function(node, i) {
           node.y = i;
