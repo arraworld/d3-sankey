@@ -8,7 +8,8 @@ export default function() {
       nodePadding = 8,
       size = [1, 1],
       nodes = [],
-      links = [];
+      links = [],
+      sinksRight = true;
 
   sankey.nodeWidth = function(_) {
     if (!arguments.length) return nodeWidth;
@@ -39,6 +40,12 @@ export default function() {
     size = _;
     return sankey;
   };
+
+  sankey.sinksRight = function (_) {
+    if (!arguments.length) return sinksRight;
+    sinksRight = _;
+    return sankey;
+ };
 
   sankey.layout = function(iterations) {
     computeNodeLinks();
@@ -116,7 +123,7 @@ export default function() {
         nextNodes,
         x = 0;
 
-    while (remainingNodes.length) {
+   while (remainingNodes.length && x < nodes.length) {
       nextNodes = [];
       remainingNodes.forEach(function(node) {
         node.x = x;
@@ -130,9 +137,10 @@ export default function() {
       remainingNodes = nextNodes;
       ++x;
     }
+    if (sinksRight) {
+      moveSinksRight(x);
+    }
 
-    //
-    moveSinksRight(x);
     scaleNodeBreadths((size[0] - nodeWidth) / (x - 1));
   }
 
@@ -168,11 +176,14 @@ export default function() {
     //
     initializeNodeDepth();
     resolveCollisions();
+    computeLinkDepths();
     for (var alpha = 1; iterations > 0; --iterations) {
       relaxRightToLeft(alpha *= .99);
       resolveCollisions();
+      computeLinkDepths();
       relaxLeftToRight(alpha);
       resolveCollisions();
+      computeLinkDepths();
     }
 
     function initializeNodeDepth() {
@@ -206,7 +217,7 @@ export default function() {
       });
 
       function weightedSource(link) {
-        return center(link.source) * link.value;
+         return (link.source.y + link.sy + link.dy / 2) * link.value;
       }
     }
 
@@ -221,7 +232,7 @@ export default function() {
       });
 
       function weightedTarget(link) {
-        return center(link.target) * link.value;
+        return (link.target.y + link.ty + link.dy / 2) * link.value;
       }
     }
 
